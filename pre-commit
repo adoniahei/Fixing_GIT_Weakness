@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+# =====================================================================
+#
+# This is my compromise in using GIT. It has no way of keeping up with
+# a version ID like CVS (and virtually all other serious/full-featured
+# repository systems) do. That is a weakness designed into GIT from
+# the start. Since I use the data in the ID tag as part of the logging
+# and debugging display, I need to do something to mimic this needed
+# functionality.
+#
+# This will find the CVS ID tab. I only use it because it actually
+# contains all of the other tags, so it is the only one I will pay
+# attention to.
+#
+# Limitations:
+#
+# 1) It uses the current time, date, user, and hostname that did the
+#    commit. It is acknowledged this might not be the one who actually
+#    made the changes.
+#
+# 2) It uses the diff-index command to get a list of files which have
+#    been changed, so it checks ALL of them, not just the one(s) which
+#    might be specified on the command line.
+#
+# 3) It is possible that two folks working on the same file will have
+#    duplicated revision numbers. It is hoped they will not both be
+#    doing a commit at the same second, so the three data points can
+#    still provide a unique identifier.
+#
+# 4) Since none of the CVS/RCS type functionality is actually being
+#    used, the data simply mimics what would be there. There is nothing
+#    built into this which confirms or validates what is generated.
+#
+# =====================================================================
+#
+# $Id: pre-commit 1.15 2021/04/20 09:40:08 [dlcrites on dlim] Exp $
+#
+# Author: David Lee Crites; davidlee@adoniah.co
+#
+# This script is: Copyright © 2015-2021, David Lee Crites of AEI.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# =====================================================================
+
+# =====================================================================
+readonly idtag='$Id: pre-commit 1.15 2021/04/20 09:40:08 [dlcrites on dlim] Exp $'
+readonly bzero=$( echo "$idtag" | awk '{ print $2}' )
+readonly version=$( echo "$idtag" | awk '{ print $3}' )
+
+readonly zeropad=0 # should awk zero fill the minor number(s)...
+
+readonly gitX=$( which git )
+readonly awkX=$( which awk )
+readonly grepX=$( which grep )
+readonly fileX=$( which file )
+
+readonly tname=/tmp/$bzero.tmp
+
+readonly d1=$( date '+%Y/%m/%d' )
+readonly d2=$( date '+%H:%M:%S' )
+readonly d3=$( whoami )
+readonly d4=$( hostname )
+# =====================================================================
+
+# =====================================================================
+# Pull together a list of all of the files that were "checked in"
+# this run.
+fnames=$( $gitX diff-index --name-status --cached HEAD | $grepX -v ^D | $awkX '{print $2}' )
+# =====================================================================
+
+# =====================================================================
+# If we are here, then there are files to work with.
+for f in $fnames ; do
+
+    # =================================================
+    # Log each of the files in a temp log file, just in case we have
+    # something go wrong.
+    echo "$bzero $version -- $d1 $d2 $d3 $d4 $f" 1>>/tmp/pre-commit.log 2>&1
+
+    # Pull out the filename.
+    fname=$( basename $f )
+    # =================================================
+
+    # =================================================
+    # Parse / fix / update the CVS tag.
+    $awkX -v d="$d1" -v t="$d2" -v w="[$d3 on $d4]" -v f="$fname" -v zp="$zeropad" -v q='$' '
+        BEGIN { r1=0; r2=0; }
+        {
+        split($0,a,"[$]"); split(a[2],b," ");
+
+        if (b[1]=="Id:") {
+            # -- b[3] is the version number -- it is possible that we
+            #    have more than one ID tag in the file, so make sure
+            #    we make them all the same...
+            if (r2==0) { split(b[3],r,"."); r1=r[1]*1; r2=r[2]+1; }
+            rv=sprintf("%u.%u", r1, r2);
+            if (zp==1)
+                {
+                if (r2>99)
+                    { rv=sprintf("%u.%u", r1, r2); }
+                else
+                    { rv=sprintf("%u.%02u", r1, r2); }
+                }
+
+            printf("%s%sId: %s %s %s %s %s Exp %s%s\n",
+                a[1], q, f, rv, d, t, w, q, a[3]);
+        } else {
+            # This is something else.
+            printf("%s\n", $0);
+        }
+
+        }' $f 1>$tname
+    # =================================================
+
+    # =================================================
+    # Copy the changed file back.
+    cat $tname >$f
+    rm -f $tname
+
+    # Add it to the list of files to process.
+    $gitX add $f
+    # =================================================
+
+    done
+# =====================================================================
