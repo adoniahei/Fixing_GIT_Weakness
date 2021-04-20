@@ -5,6 +5,6 @@ The most profound weakness that GIT suffers from is the attitude of those who pr
 
 I resisted using GIT until I found a few workarounds for the idiocy of some of the issues.  This git repo contains the ones I can offer to the public.
 
-pre-commit: This goes into ./.git/hooks directory. It then happens automagically -- as long as you add the $Id: README.md 0.1 2021/04/20 12:17:32 [dlcrites on dlim] Exp $Id: tag, then nothing in here matters.  I focused on the 
+pre-commit: This goes into ./.git/hooks directory. It then happens automagically -- as long as you add the Id tag. Without the Id tag, nothing in here matters.  I focused on the Id tag because many of the other tags could be extracted from it.
 
 checkin.sh: This is an example script I use to check in all changes at once.
