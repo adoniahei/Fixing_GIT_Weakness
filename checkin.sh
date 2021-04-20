@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # =============================================================================
-# $Id: checkin.sh 0.7 2021/04/20 12:13:20 [dlcrites on dlim] Exp $
+# $Id: checkin.sh 1.8 2021/04/20 12:21:45 [dlcrites on dlim] Exp $
 # =============================================================================
 readonly lzero=$(readlink -f $0)
 readonly bzero=$(basename $lzero .sh)
 readonly dzero=$(dirname $lzero)
 readonly now=$(date '+%d-%b-%Y, %H:%M:%S')
 readonly tstamp=$(date '+%Y%m%d.%H%M%S')
-# $Id: checkin.sh 0.7 2021/04/20 12:13:20 [dlcrites on dlim] Exp $
+# ===============================================
+cvs='$Id: checkin.sh 1.8 2021/04/20 12:21:45 [dlcrites on dlim] Exp $'
+vnum=$(echo $cvs|awk '{print $3}')
+echo "Processing $bzero (v$vnum) at $now" 1>/tmp/$bzero.$tstamp.rpt
 # ===============================================
 # NOTE: This script should be in the same subdirectory as the .git directory.
 cd $dzero
