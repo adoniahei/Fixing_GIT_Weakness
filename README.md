@@ -5,4 +5,4 @@ The most profound weakness that GIT suffers from is the attitude of those who pr
 
 I resisted using GIT until I found a few workarounds for the idiocy of some of the issues.  This git repo contains the ones I can offer to the public.
 
-
+pre-commit: This goes into ./.git/hooks directory. It then happens automagically -- as long as you add the $Id: tag.  No $Id: tag, then nothing in here matters.  I focused on the $Id: tag, since many of the others can be extracted from it. I plan on a future update that will include the $Log: tag.
